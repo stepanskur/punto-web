@@ -1,26 +1,34 @@
+'use client';
+
 import Link from 'next/link';
+import { useEffect, useState } from 'react';
+
+interface NewsItem {
+  id: string;
+  title: string;
+  category: string;
+  imageUrl: string;
+  content: string;
+  createdAt: string;
+}
 
 export const NewsSection = () => {
-  const news = [
-    {
-      title: "New European Hub: Zurich (ZRH)",
-      description: "punto.fly expands its international network with a new hub in Switzerland, offering seamless connections to Europe.",
-      tag: "Destinations",
-      colorClass: "bg-brand-purple",
-    },
-    {
-      title: "Express Baggage Drop at Belorusskiy Station",
-      description: "Free your hands before the flight. Drop off your baggage right at the Aeroexpress terminal for free.",
-      tag: "Service",
-      colorClass: "bg-brand-red",
-    },
-    {
-      title: "Business Everywhere on SSJ100",
-      description: "Experience premium comfort on all our domestic routes with upgraded service and amenities.",
-      tag: "Premium",
-      colorClass: "bg-brand-purple-light", 
-    }
-  ];
+  const [news, setNews] = useState<NewsItem[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch('/api/news')
+      .then(res => res.json())
+      .then(data => {
+        setNews(data.slice(0, 3)); // show latest 3
+        setLoading(false);
+      })
+      .catch(() => setLoading(false));
+  }, []);
+
+  if (loading || news.length === 0) {
+    return null; // hide section if no news
+  }
 
   return (
     <section className="py-20 bg-neutral-light/5">
@@ -36,23 +44,29 @@ export const NewsSection = () => {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {news.map((item, i) => (
-            <div key={i} className="bg-white rounded-xl shadow-sm border border-neutral-light/30 p-6 hover:shadow-md transition-shadow group cursor-pointer flex flex-col h-full">
-              <div className="mb-4">
-                <span className={`inline-block px-3 py-1 rounded-full text-xs font-bold font-ui text-white ${item.colorClass}`}>
-                  {item.tag}
-                </span>
+          {news.map((item) => (
+            <Link key={item.id} href={`/news/${item.id}`} className="bg-white rounded-xl shadow-sm border border-neutral-light/30 overflow-hidden hover:shadow-lg hover:-translate-y-1 transition-all group flex flex-col h-full">
+              <div className="h-48 bg-neutral-light/20 relative overflow-hidden">
+                <img src={item.imageUrl} alt={item.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                <div className="absolute top-4 left-4">
+                  <span className="inline-block px-3 py-1 bg-brand-red rounded-full text-xs font-bold font-ui text-white">
+                    {item.category}
+                  </span>
+                </div>
               </div>
-              <h3 className="text-xl font-bold font-heading text-neutral-black mb-3 group-hover:text-brand-red transition-colors">
-                {item.title}
-              </h3>
-              <p className="text-neutral-gray font-body text-sm flex-1">
-                {item.description}
-              </p>
-              <div className="mt-6 pt-4 border-t border-neutral-light/20">
-                <span className="text-brand-red text-sm font-ui font-medium">Read more &rarr;</span>
+              <div className="p-6 flex flex-col flex-1">
+                <h3 className="text-xl font-bold font-heading text-neutral-black mb-3 group-hover:text-brand-red transition-colors">
+                  {item.title}
+                </h3>
+                <p className="text-neutral-gray font-body text-sm flex-1 line-clamp-3">
+                  {item.content.substring(0, 150)}...
+                </p>
+                <div className="mt-6 pt-4 border-t border-neutral-light/20 flex justify-between items-center">
+                  <span className="text-neutral-gray text-xs">{new Date(item.createdAt).toLocaleDateString()}</span>
+                  <span className="text-brand-red text-sm font-ui font-medium">Read more &rarr;</span>
+                </div>
               </div>
-            </div>
+            </Link>
           ))}
         </div>
       </div>
