@@ -59,7 +59,7 @@ export const NewsSection = () => {
                   {item.title}
                 </h3>
                 <p className="text-neutral-gray font-body text-sm flex-1 line-clamp-3">
-                  {item.content.substring(0, 150)}...
+                  {item.content.replace(/[#*`_~]/g, '').trim().substring(0, 150)}...
                 </p>
                 <div className="mt-6 pt-4 border-t border-neutral-light/20 flex justify-between items-center">
                   <span className="text-neutral-gray text-xs">{new Date(item.createdAt).toLocaleDateString()}</span>

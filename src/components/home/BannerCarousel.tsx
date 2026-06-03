@@ -93,7 +93,7 @@ export const BannerCarousel = () => {
           display: flex;
           justify-content: center;
           gap: 8px;
-          bottom: 100px !important;
+          bottom: 50px !important;
           z-index: 20;
         }
         .swiper-pagination-bullet {

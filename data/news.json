@@ -1,1 +1,10 @@
-[]
+[
+  {
+    "id": "news-1780442810992",
+    "title": "Test",
+    "category": "Update",
+    "content": "test test\n\n## Test",
+    "imageUrl": "/uploads/1780442810988-Frame_50__1_.png",
+    "createdAt": "2026-06-02T23:26:50.992Z"
+  }
+]

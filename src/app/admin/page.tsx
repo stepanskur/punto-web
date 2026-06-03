@@ -21,8 +21,14 @@ interface NewsItem {
   createdAt: string;
 }
 
+interface Partner {
+  id: number;
+  name: string;
+  imageUrl: string;
+}
+
 export default function AdminPage() {
-  const [activeTab, setActiveTab] = useState<'banners' | 'news'>('banners');
+  const [activeTab, setActiveTab] = useState<'banners' | 'news' | 'search'>('banners');
 
   // Banners State
   const [banners, setBanners] = useState<Banner[]>([]);
@@ -36,20 +42,35 @@ export default function AdminPage() {
   const [newNewsCategory, setNewNewsCategory] = useState('');
   const [newNewsContent, setNewNewsContent] = useState('');
   const [newNewsFile, setNewNewsFile] = useState<File | null>(null);
+
+  // Partners State
+  const [partners, setPartners] = useState<Partner[]>([]);
+  const [primaryCompanyId, setPrimaryCompanyId] = useState<number>(17643);
+  const [newPartnerId, setNewPartnerId] = useState('');
+  const [newPartnerName, setNewPartnerName] = useState('');
+  const [newPartnerFile, setNewPartnerFile] = useState<File | null>(null);
   
   const [loading, setLoading] = useState(true);
 
   // Refs for file inputs to reset them
   const bannerFileRef = useRef<HTMLInputElement>(null);
   const newsFileRef = useRef<HTMLInputElement>(null);
+  const partnerFileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     Promise.all([
       fetch('/api/banners').then(res => res.json()),
-      fetch('/api/news').then(res => res.json())
-    ]).then(([bannersData, newsData]) => {
+      fetch('/api/news').then(res => res.json()),
+      fetch('/api/partners').then(res => res.json())
+    ]).then(([bannersData, newsData, partnersData]) => {
       setBanners(bannersData);
       setNews(newsData);
+      if (Array.isArray(partnersData)) {
+        setPartners(partnersData);
+      } else {
+        setPrimaryCompanyId(partnersData.primaryCompanyId);
+        setPartners(partnersData.partners);
+      }
       setLoading(false);
     }).catch(err => {
       console.error(err);
@@ -177,6 +198,61 @@ export default function AdminPage() {
     await deleteFile(item.imageUrl);
   };
 
+  // --- Partners logic ---
+  const handleSavePartners = async (updatedPartners: Partner[], newPrimaryId?: number) => {
+    try {
+      const payload = {
+        primaryCompanyId: newPrimaryId ?? primaryCompanyId,
+        partners: updatedPartners
+      };
+      await fetch('/api/partners', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      setPartners(updatedPartners);
+      if (newPrimaryId) setPrimaryCompanyId(newPrimaryId);
+    } catch (err) {
+      console.error(err);
+      alert('Failed to save partners');
+    }
+  };
+
+  const handleUpdatePrimaryCompany = async () => {
+    await handleSavePartners(partners, primaryCompanyId);
+    alert('Primary company ID updated!');
+  };
+
+  const handleAddPartner = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newPartnerId || !newPartnerName || !newPartnerFile) return;
+
+    try {
+      const imageUrl = await uploadFile(newPartnerFile);
+      const newPartner: Partner = {
+        id: parseInt(newPartnerId),
+        name: newPartnerName,
+        imageUrl,
+      };
+
+      const updated = [...partners, newPartner];
+      await handleSavePartners(updated);
+      
+      setNewPartnerId('');
+      setNewPartnerName('');
+      setNewPartnerFile(null);
+      if (partnerFileRef.current) partnerFileRef.current.value = '';
+    } catch (e) {
+      alert('Error adding partner');
+    }
+  };
+
+  const handleDeletePartner = async (partner: Partner) => {
+    const updated = partners.filter(p => p.id !== partner.id);
+    await handleSavePartners(updated);
+    await deleteFile(partner.imageUrl);
+  };
+
   return (
     <div className="min-h-screen bg-neutral-light/5">
       <header className="bg-white border-b border-neutral-light/30">
@@ -201,6 +277,12 @@ export default function AdminPage() {
             onClick={() => setActiveTab('news')}
           >
             News
+          </button>
+          <button 
+            className={`px-6 py-2 rounded-xl font-bold transition-colors ${activeTab === 'search' ? 'bg-brand-red text-white' : 'bg-white text-neutral-gray border border-neutral-light/30'}`}
+            onClick={() => setActiveTab('search')}
+          >
+            Search Settings
           </button>
         </div>
 
@@ -272,7 +354,7 @@ export default function AdminPage() {
               )}
             </div>
           </div>
-        ) : (
+        ) : activeTab === 'news' ? (
           <div className="space-y-8">
             <div className="bg-white rounded-xl shadow-sm border border-neutral-light/30 p-6">
               <h2 className="text-xl font-bold font-heading mb-4">Add New News</h2>
@@ -349,7 +431,87 @@ export default function AdminPage() {
               )}
             </div>
           </div>
-        )}
+        ) : activeTab === 'search' ? (
+          <div className="space-y-8">
+            <div className="bg-white rounded-xl shadow-sm border border-neutral-light/30 p-6">
+              <h2 className="text-xl font-bold font-heading mb-4">Primary Company</h2>
+              <div className="flex gap-4">
+                <input
+                  type="number"
+                  value={primaryCompanyId}
+                  onChange={e => setPrimaryCompanyId(parseInt(e.target.value))}
+                  className="w-full border border-neutral-light/50 rounded-lg px-4 py-2"
+                  placeholder="17643"
+                />
+                <Button variant="primary" onClick={handleUpdatePrimaryCompany}>Save</Button>
+              </div>
+            </div>
+
+            <div className="bg-white rounded-xl shadow-sm border border-neutral-light/30 p-6">
+              <h2 className="text-xl font-bold font-heading mb-4">Add Partner Airline</h2>
+              <form onSubmit={handleAddPartner} className="space-y-4">
+                <div>
+                  <label className="block text-sm font-semibold text-neutral-gray mb-1">Airline ID</label>
+                  <input
+                    type="number"
+                    value={newPartnerId}
+                    onChange={e => setNewPartnerId(e.target.value)}
+                    className="w-full border border-neutral-light/50 rounded-lg px-4 py-2"
+                    placeholder="17643"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-neutral-gray mb-1">Airline Name</label>
+                  <input
+                    type="text"
+                    value={newPartnerName}
+                    onChange={e => setNewPartnerName(e.target.value)}
+                    className="w-full border border-neutral-light/50 rounded-lg px-4 py-2"
+                    placeholder="Punto Fly"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-neutral-gray mb-1">Icon/Image</label>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    ref={partnerFileRef}
+                    onChange={e => setNewPartnerFile(e.target.files?.[0] || null)}
+                    className="w-full border border-neutral-light/50 rounded-lg px-4 py-2"
+                    required
+                  />
+                </div>
+                <Button variant="primary" type="submit" disabled={!newPartnerFile}>Add Partner</Button>
+              </form>
+            </div>
+
+            <div className="bg-white rounded-xl shadow-sm border border-neutral-light/30 p-6">
+              <h2 className="text-xl font-bold font-heading mb-4">Current Partners</h2>
+              {partners.length === 0 ? (
+                <p className="text-neutral-gray">No partners found.</p>
+              ) : (
+                <div className="space-y-4">
+                  {partners.map(partner => (
+                    <div key={partner.id} className="flex items-center gap-4 p-4 border border-neutral-light/20 rounded-lg">
+                      <div className="w-16 h-16 bg-neutral-light/20 rounded overflow-hidden flex-shrink-0 relative">
+                        <img src={partner.imageUrl} alt={partner.name} className="object-cover w-full h-full" />
+                      </div>
+                      <div className="flex-1">
+                        <div className="text-xs text-brand-red font-bold uppercase mb-1">ID: {partner.id}</div>
+                        <h3 className="font-bold font-ui">{partner.name}</h3>
+                      </div>
+                      <Button variant="ghost" onClick={() => handleDeletePartner(partner)} className="text-brand-red">
+                        Delete
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        ) : null}
       </main>
     </div>
   );

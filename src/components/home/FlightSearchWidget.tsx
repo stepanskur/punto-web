@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/Button';
 import { PlaneTakeoff, PlaneLanding, Calendar, Users, ArrowRightLeft, Plus, Minus, ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react';
 
@@ -18,7 +19,8 @@ const AIRPORTS = [
 const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 const DAYS = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
 
-export const FlightSearchWidget = () => {
+export const FlightSearchWidget = ({ compact = false }: { compact?: boolean }) => {
+  const router = useRouter();
   const [tripType, setTripType] = useState('one');
   const [from, setFrom] = useState('');
   const [to, setTo] = useState('');
@@ -58,13 +60,58 @@ export const FlightSearchWidget = () => {
     setTo(temp);
   };
 
-  const filteredFrom = AIRPORTS.filter(a => {
+  const [availableAirports, setAvailableAirports] = useState<{code: string, city: string, country: string}[]>([]);
+
+  useEffect(() => {
+    // Load all allowed airports dynamically based on links
+    const loadAirports = async () => {
+      try {
+        const partnersRes = await fetch('/api/partners');
+        const partnersData = await partnersRes.json();
+        
+        let companyIds = [];
+        if (Array.isArray(partnersData)) {
+          companyIds = [17643, ...partnersData.map((p: any) => p.id)];
+        } else {
+          companyIds = [partnersData.primaryCompanyId, ...(partnersData.partners || []).map((p: any) => p.id)];
+        }
+
+        const airportsMap = new Map();
+        
+        await Promise.all(companyIds.map(async (id) => {
+          try {
+            const res = await fetch(`/api/airline-club/airlines/${id}/links`);
+            const links = await res.json();
+            links.forEach((link: any) => {
+              if (!airportsMap.has(link.fromAirportCode)) {
+                airportsMap.set(link.fromAirportCode, { code: link.fromAirportCode, city: link.fromAirportCity, country: link.fromCountryCode });
+              }
+              if (!airportsMap.has(link.toAirportCode)) {
+                airportsMap.set(link.toAirportCode, { code: link.toAirportCode, city: link.toAirportCity, country: link.toCountryCode });
+              }
+            });
+          } catch (e) {
+            console.error(e);
+          }
+        }));
+
+        if (airportsMap.size > 0) {
+          setAvailableAirports(Array.from(airportsMap.values()));
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    };
+    loadAirports();
+  }, []);
+
+  const filteredFrom = availableAirports.filter(a => {
     const searchStr = from.toLowerCase();
     const cityCode = `${a.city} (${a.code})`.toLowerCase();
     return cityCode.includes(searchStr) || a.city.toLowerCase().includes(searchStr) || a.code.toLowerCase().includes(searchStr);
   });
   
-  const filteredTo = AIRPORTS.filter(a => {
+  const filteredTo = availableAirports.filter(a => {
     const searchStr = to.toLowerCase();
     const cityCode = `${a.city} (${a.code})`.toLowerCase();
     return cityCode.includes(searchStr) || a.city.toLowerCase().includes(searchStr) || a.code.toLowerCase().includes(searchStr);
@@ -177,9 +224,15 @@ export const FlightSearchWidget = () => {
     return days;
   };
 
+  const isSearchDisabled = !from || !to || !departureDate || (tripType === 'round' && !returnDate);
+
+  const containerClasses = compact 
+    ? "w-full relative z-10" 
+    : "bg-white rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] p-4 md:p-5 max-w-7xl mx-auto -mt-10 relative z-10 border border-neutral-light/30 backdrop-blur-xl";
+
   return (
-    <div className="bg-white rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] p-6 md:p-8 max-w-7xl mx-auto -mt-16 relative z-10 border border-neutral-light/30 backdrop-blur-xl">
-      <div className="flex items-center gap-6 mb-6 border-b border-neutral-light/30 pb-4 font-ui text-sm">
+    <div className={containerClasses}>
+      <div className={`flex items-center gap-6 border-b border-neutral-light/30 font-ui text-sm ${compact ? 'mb-4 pb-4' : 'mb-4 pb-3'}`}>
         <label className={`flex items-center gap-2 cursor-pointer transition-colors font-medium ${tripType === 'round' ? 'text-brand-red' : 'text-neutral-gray hover:text-neutral-black'}`}>
           <input type="radio" name="flightType" checked={tripType === 'round'} onChange={() => { setTripType('round'); if(!returnDate) setIsDatesOpen(true); }} className="hidden" />
           <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${tripType === 'round' ? 'border-brand-red' : 'border-neutral-gray'}`}>
@@ -350,8 +403,8 @@ export const FlightSearchWidget = () => {
                     </button>
                     <span className="font-bold w-4 text-center">{persons}</span>
                     <button 
-                      onClick={() => setPersons(p => p + 1)}
-                      className="w-8 h-8 rounded-full flex items-center justify-center border border-brand-red text-brand-red hover:bg-brand-red/10 transition-colors"
+                      onClick={() => persons < 3 && setPersons(p => p + 1)}
+                      className={`w-8 h-8 rounded-full flex items-center justify-center border ${persons >= 3 ? 'border-neutral-light text-neutral-gray cursor-not-allowed' : 'border-brand-red text-brand-red hover:bg-brand-red/10'} transition-colors`}
                     >
                       <Plus className="w-4 h-4" />
                     </button>
@@ -369,7 +422,7 @@ export const FlightSearchWidget = () => {
                     </button>
                     <button 
                       onClick={() => setTravelClass('Business')}
-                      className={`flex-1 py-2 rounded-xl text-sm font-medium transition-colors ${travelClass === 'Business' ? 'bg-brand-red text-white' : 'bg-neutral-light/20 text-neutral-gray hover:bg-neutral-light/40'}`}
+                      className={`flex-1 py-2 rounded-xl text-sm font-medium transition-colors ${travelClass === 'Business' ? 'bg-[#482AA9] text-white' : 'bg-neutral-light/20 text-neutral-gray hover:bg-neutral-light/40'}`}
                     >
                       Business
                     </button>
@@ -381,7 +434,21 @@ export const FlightSearchWidget = () => {
         </div>
 
         <div className="relative md:ml-3">
-          <Button variant="primary" className="w-full md:w-auto h-[52px] px-8 text-base font-bold shadow-lg shadow-brand-red/30 hover:shadow-brand-red/40 transition-all rounded-2xl">
+          <Button 
+            variant="primary" 
+            disabled={isSearchDisabled}
+            onClick={() => {
+              if (isSearchDisabled) return;
+              const query = new URLSearchParams({
+                from, to, persons: persons.toString(), class: travelClass, 
+                tripType, 
+                dep: departureDate ? departureDate.toISOString() : '', 
+                ret: returnDate ? returnDate.toISOString() : ''
+              });
+              router.push(`/search?${query.toString()}`);
+            }}
+            className={`w-full md:w-auto h-[52px] px-8 text-base font-bold shadow-lg transition-all rounded-2xl ${isSearchDisabled ? 'bg-neutral-light text-neutral-gray shadow-none cursor-not-allowed opacity-70' : 'shadow-brand-red/30 hover:shadow-brand-red/40'}`}
+          >
             Search Flights
           </Button>
         </div>
