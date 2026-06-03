@@ -4,6 +4,8 @@ import { useSearchParams } from 'next/navigation';
 import { useEffect, useState, Suspense } from 'react';
 import { Plane } from 'lucide-react';
 import { FlightSearchWidget } from '@/components/home/FlightSearchWidget';
+import { Loader } from '@/components/ui/Loader';
+import { useTranslation } from '@/lib/i18n';
 
 // Types for the API response
 interface RouteLink {
@@ -147,6 +149,7 @@ function FlightCard({ group, convertPrice, persons, partners, primaryCompanyId }
 }
 
 function SearchContent() {
+  const { t } = useTranslation();
   const searchParams = useSearchParams();
   const fromParam = searchParams.get('from');
   const toParam = searchParams.get('to');
@@ -199,9 +202,9 @@ function SearchContent() {
     
     const fetchRoutesWithFallback = async (fId: number, tId: number) => {
       let data = await (await fetch(`/api/airline-club/search-route/${fId}/${tId}`)).json();
-      if (!data || data.length === 0) {
-        // Manual connection calculation
-        const hubIatas = ['SVO', 'LED', 'ZRH', 'LHR', 'CDG', 'JFK', 'DXB', 'NRT'];
+      if (!data) data = [];
+      // Manual connection calculation
+      const hubIatas = ['SVO', 'LED', 'ZRH', 'LHR', 'CDG', 'JFK', 'DXB', 'NRT'];
         const hubIds = await Promise.all(hubIatas.map(async iata => {
           try {
             const r = await (await fetch(`/api/airline-club/search-airport?input=${iata}`)).json();
@@ -235,9 +238,7 @@ function SearchContent() {
               }
             }
           } catch {}
-          if (data && data.length > 0) break; // Break early if we found some routes
         }
-      }
       return data || [];
     };
 
@@ -393,17 +394,8 @@ function SearchContent() {
         <div className="flex-1 space-y-4">
           {loading && (
             <div className="bg-white rounded-2xl p-16 shadow-sm border border-neutral-light/30 flex flex-col items-center justify-center min-h-[400px]">
-              <div className="relative w-32 h-32 mb-8">
-                {/* Globe/world background circle */}
-                <div className="absolute inset-0 border-4 border-neutral-light/30 rounded-full"></div>
-                {/* Spinning flight path */}
-                <div className="absolute inset-0 border-4 border-transparent border-t-brand-red rounded-full animate-[spin_2s_linear_infinite]"></div>
-                {/* Plane in center */}
-                <div className="absolute inset-0 flex items-center justify-center text-brand-red">
-                  <Plane className="w-12 h-12 animate-[pulse_1.5s_ease-in-out_infinite]" />
-                </div>
-              </div>
-              <h3 className="text-2xl font-bold font-heading mb-2 text-neutral-black animate-pulse">Searching for the best flights...</h3>
+              <Loader />
+              <h3 className="text-2xl font-bold font-heading mb-2 text-neutral-black animate-pulse mt-8">{t('Searching for the best flights...')}</h3>
               <p className="text-neutral-gray text-center max-w-sm">
                 We're checking prices and routes across our partner network to find you the best deals.
               </p>

@@ -10,6 +10,26 @@
       "id": 17490,
       "name": "Bear Republic Airways",
       "imageUrl": "/uploads/1780449248532-logo.png"
+    },
+    {
+      "id": 17834,
+      "name": "TimeWasters Air",
+      "imageUrl": "/uploads/1780487281136-logo__1_.png"
+    },
+    {
+      "id": 17961,
+      "name": "ExpediAir",
+      "imageUrl": "/uploads/1780487324915-logo__2_.png"
+    },
+    {
+      "id": 2933,
+      "name": "Bengal Airlines",
+      "imageUrl": "/uploads/1780487377715-logo__3_.png"
+    },
+    {
+      "id": 18020,
+      "name": "Deccan Aero",
+      "imageUrl": "/uploads/1780487428580-logo__4_.png"
     }
   ]
 }

@@ -4,11 +4,13 @@ import React, { useEffect, useState } from 'react';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Autoplay, Pagination, EffectFade } from 'swiper/modules';
 import Link from 'next/link';
+import { useTranslation } from '@/lib/i18n';
 
 // Import Swiper styles
 import 'swiper/css';
 import 'swiper/css/pagination';
 import 'swiper/css/effect-fade';
+import { Loader } from '@/components/ui/Loader';
 
 interface Banner {
   id: string;
@@ -18,6 +20,7 @@ interface Banner {
 }
 
 export const BannerCarousel = () => {
+  const { t } = useTranslation();
   const [banners, setBanners] = useState<Banner[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -36,8 +39,8 @@ export const BannerCarousel = () => {
 
   if (loading) {
     return (
-      <section className="relative w-full h-[350px] bg-brand-red animate-pulse flex items-center justify-center">
-        <div className="text-white opacity-50">Loading banners...</div>
+      <section className="relative w-full h-[350px] bg-white flex items-center justify-center">
+        <Loader />
       </section>
     );
   }
@@ -47,10 +50,10 @@ export const BannerCarousel = () => {
       <section className="relative bg-brand-red pt-24 pb-32 overflow-hidden">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center">
           <h1 className="text-5xl md:text-7xl font-bold font-heading text-white mb-6 tracking-tight">
-            Simply. Fly.
+            {t('Simply. Fly.')}
           </h1>
           <p className="text-xl md:text-2xl text-white/90 font-body max-w-2xl mx-auto font-medium">
-            Connect the points, fly the world.
+            {t('Connect the points, fly the world.')}
           </p>
         </div>
       </section>
@@ -80,7 +83,7 @@ export const BannerCarousel = () => {
                   {banner.title}
                 </h2>
                 <span className="inline-block bg-brand-red text-white px-6 py-2 rounded font-ui font-medium opacity-0 group-hover:opacity-100 transition-opacity duration-500 delay-200">
-                  Explore Now
+                  {t('Explore Now')}
                 </span>
               </div>
             </Link>

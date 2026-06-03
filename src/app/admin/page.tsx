@@ -5,6 +5,9 @@ import { Button } from '@/components/ui/Button';
 import { Logo } from '@/components/ui/Logo';
 import Link from 'next/link';
 
+// 🔑 Пароль администратора
+const ADMIN_PASSWORD = 'admin123';
+
 interface Banner {
   id: string;
   imageUrl: string;
@@ -17,7 +20,7 @@ interface NewsItem {
   title: string;
   category: string;
   imageUrl: string;
-  content: string; // Markdown
+  content: string;
   createdAt: string;
 }
 
@@ -27,8 +30,14 @@ interface Partner {
   imageUrl: string;
 }
 
-export default function AdminPage() {
+// Изменили на константу для стабильности Turbopack
+const AdminPage = () => {
   const [activeTab, setActiveTab] = useState<'banners' | 'news' | 'search'>('banners');
+  
+  // Auth State
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [password, setPassword] = useState('');
+  const [authError, setAuthError] = useState(false);
 
   // Banners State
   const [banners, setBanners] = useState<Banner[]>([]);
@@ -52,12 +61,16 @@ export default function AdminPage() {
   
   const [loading, setLoading] = useState(true);
 
-  // Refs for file inputs to reset them
   const bannerFileRef = useRef<HTMLInputElement>(null);
   const newsFileRef = useRef<HTMLInputElement>(null);
   const partnerFileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
+    const isAuth = localStorage.getItem('isAdminAuthenticated');
+    if (isAuth === 'true') {
+      setIsAuthenticated(true);
+    }
+
     Promise.all([
       fetch('/api/banners').then(res => res.json()),
       fetch('/api/news').then(res => res.json()),
@@ -77,6 +90,23 @@ export default function AdminPage() {
       setLoading(false);
     });
   }, []);
+
+  const handleLogin = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (password === ADMIN_PASSWORD) {
+      localStorage.setItem('isAdminAuthenticated', 'true');
+      setIsAuthenticated(true);
+      setAuthError(false);
+    } else {
+      setAuthError(true);
+    }
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('isAdminAuthenticated');
+    setIsAuthenticated(false);
+    setPassword('');
+  };
 
   const uploadFile = async (file: File) => {
     const formData = new FormData();
@@ -253,6 +283,59 @@ export default function AdminPage() {
     await deleteFile(partner.imageUrl);
   };
 
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-neutral-light/5">
+        <p className="text-neutral-gray font-medium animate-pulse">Loading Panel...</p>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-neutral-light/10 flex flex-col items-center justify-center p-4">
+        <div className="mb-8">
+          <Link href="/">
+            <Logo width={150} height={30} />
+          </Link>
+        </div>
+        <div className="w-full max-w-md bg-white rounded-2xl shadow-xl border border-neutral-light/40 p-8 backdrop-blur-sm">
+          <h2 className="text-2xl font-bold font-heading text-neutral-dark mb-2 text-center">Protected Area</h2>
+          <p className="text-sm text-neutral-gray text-center mb-6">Please enter the administrator password to proceed.</p>
+          
+          <form onSubmit={handleLogin} className="space-y-4">
+            <div>
+              <input
+                type="password"
+                value={password}
+                onChange={e => {
+                  setPassword(e.target.value);
+                  if (authError) setAuthError(false);
+                }}
+                className={`w-full border rounded-xl px-4 py-3 transition-all outline-none text-center font-mono text-lg tracking-widest ${
+                  authError 
+                    ? 'border-brand-red bg-brand-red/5 focus:border-brand-red ring-2 ring-brand-red/20' 
+                    : 'border-neutral-light/60 focus:border-brand-red focus:ring-2 focus:ring-brand-red/10'
+                }`}
+                placeholder="••••••••"
+                required
+                autoFocus
+              />
+              {authError && (
+                <p className="text-xs text-brand-red font-semibold text-center mt-2">
+                  Incorrect password. Please try again.
+                </p>
+              )}
+            </div>
+            <Button variant="primary" type="submit" className="w-full py-3 rounded-xl font-bold text-base">
+              Sign In
+            </Button>
+          </form>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-neutral-light/5">
       <header className="bg-white border-b border-neutral-light/30">
@@ -260,35 +343,42 @@ export default function AdminPage() {
           <Link href="/">
             <Logo width={126} height={24} />
           </Link>
-          <span className="font-ui font-semibold text-brand-red">Admin Panel</span>
+          <span className="font-ui font-semibold text-brand-red bg-brand-red/5 px-3 py-1 rounded-full text-xs uppercase tracking-wider">Admin Panel</span>
         </div>
       </header>
 
       <main className="max-w-6xl mx-auto px-4 py-12">
-        <div className="flex gap-4 mb-8">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
+          <div className="flex gap-2 p-1 bg-white border border-neutral-light/30 rounded-xl shadow-sm">
+            <button 
+              className={`px-5 py-2 rounded-lg font-bold transition-all text-sm ${activeTab === 'banners' ? 'bg-brand-red text-white shadow-sm' : 'text-neutral-gray hover:text-neutral-dark'}`}
+              onClick={() => setActiveTab('banners')}
+            >
+              Banners
+            </button>
+            <button 
+              className={`px-5 py-2 rounded-lg font-bold transition-all text-sm ${activeTab === 'news' ? 'bg-brand-red text-white shadow-sm' : 'text-neutral-gray hover:text-neutral-dark'}`}
+              onClick={() => setActiveTab('news')}
+            >
+              News
+            </button>
+            <button 
+              className={`px-5 py-2 rounded-lg font-bold transition-all text-sm ${activeTab === 'search' ? 'bg-brand-red text-white shadow-sm' : 'text-neutral-gray hover:text-neutral-dark'}`}
+              onClick={() => setActiveTab('search')}
+            >
+              Search Settings
+            </button>
+          </div>
+
           <button 
-            className={`px-6 py-2 rounded-xl font-bold transition-colors ${activeTab === 'banners' ? 'bg-brand-red text-white' : 'bg-white text-neutral-gray border border-neutral-light/30'}`}
-            onClick={() => setActiveTab('banners')}
+            onClick={handleLogout}
+            className="px-5 py-2.5 rounded-xl font-bold text-sm text-brand-red border border-brand-red/20 bg-brand-red/5 hover:bg-brand-red hover:text-white transition-all shadow-sm"
           >
-            Banners
-          </button>
-          <button 
-            className={`px-6 py-2 rounded-xl font-bold transition-colors ${activeTab === 'news' ? 'bg-brand-red text-white' : 'bg-white text-neutral-gray border border-neutral-light/30'}`}
-            onClick={() => setActiveTab('news')}
-          >
-            News
-          </button>
-          <button 
-            className={`px-6 py-2 rounded-xl font-bold transition-colors ${activeTab === 'search' ? 'bg-brand-red text-white' : 'bg-white text-neutral-gray border border-neutral-light/30'}`}
-            onClick={() => setActiveTab('search')}
-          >
-            Search Settings
+            Sign Out
           </button>
         </div>
 
-        {loading ? (
-          <p>Loading...</p>
-        ) : activeTab === 'banners' ? (
+        {activeTab === 'banners' ? (
           <div className="space-y-8">
             <div className="bg-white rounded-xl shadow-sm border border-neutral-light/30 p-6">
               <h2 className="text-xl font-bold font-heading mb-4">Add New Banner</h2>
@@ -515,4 +605,7 @@ export default function AdminPage() {
       </main>
     </div>
   );
-}
+};
+
+// Четкий дефолтный экспорт в самом конце файла для бандлера
+export default AdminPage;

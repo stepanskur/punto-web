@@ -70,14 +70,14 @@ export const Header = () => {
       {isOpen && (
         <div className="absolute right-0 top-full mt-2 w-48 bg-white border border-neutral-light/30 rounded-2xl shadow-xl p-4 z-50">
           <div className="mb-4">
-            <div className="text-xs font-bold text-neutral-gray uppercase tracking-wider mb-2">Language</div>
+            <div className="text-xs font-bold text-neutral-gray uppercase tracking-wider mb-2">{t('Language')}</div>
             <div className="flex gap-2">
               <button onClick={() => handleLangChange('EN')} className={`flex-1 py-1 text-sm font-bold rounded-lg transition-colors ${lang === 'EN' ? 'bg-brand-red/10 text-brand-red' : 'text-neutral-gray hover:bg-neutral-light/20'}`}>EN</button>
               <button onClick={() => handleLangChange('RU')} className={`flex-1 py-1 text-sm font-bold rounded-lg transition-colors ${lang === 'RU' ? 'bg-brand-red/10 text-brand-red' : 'text-neutral-gray hover:bg-neutral-light/20'}`}>RU</button>
             </div>
           </div>
           <div>
-            <div className="text-xs font-bold text-neutral-gray uppercase tracking-wider mb-2">Currency</div>
+            <div className="text-xs font-bold text-neutral-gray uppercase tracking-wider mb-2">{t('Currency')}</div>
             <div className="grid grid-cols-3 gap-1">
               <button onClick={() => handleCurrencyChange('USD')} className={`py-1 text-sm font-bold rounded-lg transition-colors ${currency === 'USD' ? 'bg-brand-red/10 text-brand-red' : 'text-neutral-gray hover:bg-neutral-light/20'}`}>USD</button>
               <button onClick={() => handleCurrencyChange('EUR')} className={`py-1 text-sm font-bold rounded-lg transition-colors ${currency === 'EUR' ? 'bg-brand-red/10 text-brand-red' : 'text-neutral-gray hover:bg-neutral-light/20'}`}>EUR</button>
@@ -112,11 +112,12 @@ export const Header = () => {
           <Link href="/fares" className="hover:text-brand-red transition-colors">{t('Fares & Classes')}</Link>
           <Link href="/destinations" className="hover:text-brand-red transition-colors">{t('Destinations')}</Link>
           <Link href="/news" className="hover:text-brand-red transition-colors">{t('News')}</Link>
-          <Link href="/about" className="hover:text-brand-red transition-colors">{t('About Us')}</Link>
         </nav>
         <div className="flex items-center gap-4">
           <Selectors />
-          <Button variant="primary">{t('Search your flight')}</Button>
+          <Link href="/">
+            <Button variant="primary">{t('Search your flight')}</Button>
+          </Link>
         </div>
       </div>
     </header>

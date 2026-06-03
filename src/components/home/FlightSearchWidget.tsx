@@ -8,13 +8,7 @@ import { useTranslation } from '@/lib/i18n';
 
 const AIRPORTS = [
   { code: 'SVO', city: 'Moscow', country: 'Russia' },
-  { code: 'LED', city: 'St. Petersburg', country: 'Russia' },
-  { code: 'ZRH', city: 'Zurich', country: 'Switzerland' },
-  { code: 'LHR', city: 'London', country: 'UK' },
-  { code: 'CDG', city: 'Paris', country: 'France' },
-  { code: 'JFK', city: 'New York', country: 'USA' },
-  { code: 'DXB', city: 'Dubai', country: 'UAE' },
-  { code: 'NRT', city: 'Tokyo', country: 'Japan' }
+  { code: 'ZRH', city: 'Zurich', country: 'Switzerland' }
 ];
 
 const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
@@ -135,12 +129,12 @@ export const FlightSearchWidget = ({ compact = false }: { compact?: boolean }) =
   };
 
   const formatDateDisplay = () => {
-    if (!departureDate) return 'Add dates';
+    if (!departureDate) return t('Add dates');
     if (tripType === 'one') return formatDate(departureDate);
     if (tripType === 'round') {
-      return returnDate ? `${formatDate(departureDate)} - ${formatDate(returnDate)}` : `${formatDate(departureDate)} - Return`;
+      return returnDate ? `${formatDate(departureDate)} - ${formatDate(returnDate)}` : `${formatDate(departureDate)} - ${t('Return')}`;
     }
-    return 'Add dates';
+    return t('Add dates');
   };
 
   // Calendar logic
@@ -250,20 +244,20 @@ export const FlightSearchWidget = ({ compact = false }: { compact?: boolean }) =
           <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${tripType === 'round' ? 'border-brand-red' : 'border-neutral-gray'}`}>
             {tripType === 'round' && <div className="w-2 h-2 rounded-full bg-brand-red"></div>}
           </div>
-          Round Trip
+          {t('Round Trip')}
         </label>
         <label className={`flex items-center gap-2 cursor-pointer transition-colors font-medium ${tripType === 'one' ? 'text-brand-red' : 'text-neutral-gray hover:text-neutral-black'}`}>
           <input type="radio" name="flightType" checked={tripType === 'one'} onChange={() => { setTripType('one'); setReturnDate(null); }} className="hidden" />
           <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${tripType === 'one' ? 'border-brand-red' : 'border-neutral-gray'}`}>
             {tripType === 'one' && <div className="w-2 h-2 rounded-full bg-brand-red"></div>}
           </div>
-          One Way
+          {t('One Way')}
         </label>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-[1fr_auto_1fr_1fr_1fr_auto] gap-3 font-ui items-end">
         <div className="relative group" ref={fromRef}>
-          <label className="block text-xs font-bold text-neutral-gray mb-1.5 uppercase tracking-wider">From</label>
+          <label className="block text-xs font-bold text-neutral-gray mb-1.5 uppercase tracking-wider">{t('From')}</label>
           <div className="relative">
             <PlaneTakeoff className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-neutral-gray group-focus-within:text-brand-red transition-colors" />
             <input 
@@ -271,7 +265,7 @@ export const FlightSearchWidget = ({ compact = false }: { compact?: boolean }) =
               value={from}
               onChange={(e) => { setFrom(e.target.value); setIsFromOpen(true); }}
               onFocus={() => setIsFromOpen(true)}
-              placeholder="Where from?" 
+              placeholder={t('Where from?')} 
               className="w-full h-[52px] bg-neutral-light/10 border border-neutral-light/50 rounded-2xl pl-12 pr-4 text-sm font-medium text-neutral-black placeholder-neutral-gray focus:outline-none focus:ring-2 focus:ring-brand-red/20 focus:border-brand-red transition-all"
             />
             {isFromOpen && (
@@ -301,7 +295,7 @@ export const FlightSearchWidget = ({ compact = false }: { compact?: boolean }) =
         </div>
         
         <div className="relative group" ref={toRef}>
-          <label className="block text-xs font-bold text-neutral-gray mb-1.5 uppercase tracking-wider">To</label>
+          <label className="block text-xs font-bold text-neutral-gray mb-1.5 uppercase tracking-wider">{t('To')}</label>
           <div className="relative">
             <PlaneLanding className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-neutral-gray group-focus-within:text-brand-red transition-colors" />
             <input 
@@ -309,7 +303,7 @@ export const FlightSearchWidget = ({ compact = false }: { compact?: boolean }) =
               value={to}
               onChange={(e) => { setTo(e.target.value); setIsToOpen(true); }}
               onFocus={() => setIsToOpen(true)}
-              placeholder="Where to?" 
+              placeholder={t('Where to?')} 
               className="w-full h-[52px] bg-neutral-light/10 border border-neutral-light/50 rounded-2xl pl-12 pr-4 text-sm font-medium text-neutral-black placeholder-neutral-gray focus:outline-none focus:ring-2 focus:ring-brand-red/20 focus:border-brand-red transition-all"
             />
             {isToOpen && (
@@ -335,7 +329,7 @@ export const FlightSearchWidget = ({ compact = false }: { compact?: boolean }) =
         </div>
         
         <div className="relative group" ref={datesRef}>
-          <label className="block text-xs font-bold text-neutral-gray mb-1.5 uppercase tracking-wider">Dates</label>
+          <label className="block text-xs font-bold text-neutral-gray mb-1.5 uppercase tracking-wider">{t('Dates')}</label>
           <div className="relative">
             <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-neutral-gray group-focus-within:text-brand-red transition-colors" />
             <div 
@@ -374,11 +368,11 @@ export const FlightSearchWidget = ({ compact = false }: { compact?: boolean }) =
                 {tripType === 'round' && (
                   <div className="mt-4 pt-4 border-t border-neutral-light/30 flex justify-between items-center text-sm">
                     <div className={departureDate ? 'text-neutral-black font-medium' : 'text-neutral-gray'}>
-                      {departureDate ? formatDate(departureDate) : 'Departure'}
+                      {departureDate ? formatDate(departureDate) : t('Departure')}
                     </div>
                     <div className="w-4 h-[1px] bg-neutral-gray/50"></div>
                     <div className={returnDate ? 'text-neutral-black font-medium' : 'text-neutral-gray'}>
-                      {returnDate ? formatDate(returnDate) : 'Return'}
+                      {returnDate ? formatDate(returnDate) : t('Return')}
                     </div>
                   </div>
                 )}
@@ -388,14 +382,14 @@ export const FlightSearchWidget = ({ compact = false }: { compact?: boolean }) =
         </div>
         
         <div className="relative group" ref={travelersRef}>
-          <label className="block text-xs font-bold text-neutral-gray mb-1.5 uppercase tracking-wider">Travelers</label>
+          <label className="block text-xs font-bold text-neutral-gray mb-1.5 uppercase tracking-wider">{t('Travelers')}</label>
           <div className="relative">
             <Users className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-neutral-gray group-focus-within:text-brand-red transition-colors" />
             <div 
               onClick={() => setIsTravelersOpen(!isTravelersOpen)}
               className="w-full h-[52px] bg-neutral-light/10 border border-neutral-light/50 rounded-2xl pl-12 pr-4 text-sm font-medium text-neutral-black cursor-pointer hover:border-brand-red/50 transition-all flex items-center justify-between"
             >
-              <span className="truncate select-none">{persons} Person{persons > 1 ? 's' : ''}, {travelClass}</span>
+              <span className="truncate select-none">{persons} {persons > 1 ? t('Persons') : t('Person')}, {t(travelClass)}</span>
               <ChevronDown className={`w-4 h-4 text-neutral-gray transition-transform ${isTravelersOpen ? 'rotate-180' : ''}`} />
             </div>
             
@@ -403,7 +397,7 @@ export const FlightSearchWidget = ({ compact = false }: { compact?: boolean }) =
               <div className="absolute top-full left-0 w-72 mt-2 bg-white rounded-2xl shadow-xl border border-neutral-light/30 z-50 p-4">
                 <div className="flex items-center justify-between mb-4 pb-4 border-b border-neutral-light/30">
                   <div>
-                    <div className="font-bold text-sm">Persons</div>
+                    <div className="font-bold text-sm">{t('Persons')}</div>
                     <div className="text-xs text-neutral-gray">Count of travelers</div>
                   </div>
                   <div className="flex items-center gap-3">
@@ -424,19 +418,19 @@ export const FlightSearchWidget = ({ compact = false }: { compact?: boolean }) =
                 </div>
                 
                 <div>
-                  <div className="font-bold text-sm mb-2">Class</div>
+                  <div className="font-bold text-sm mb-2">{t('Class')}</div>
                   <div className="flex gap-2">
                     <button 
                       onClick={() => setTravelClass('Economy')}
                       className={`flex-1 py-2 rounded-xl text-sm font-medium transition-colors ${travelClass === 'Economy' ? 'bg-brand-red text-white' : 'bg-neutral-light/20 text-neutral-gray hover:bg-neutral-light/40'}`}
                     >
-                      Economy
+                      {t('Economy')}
                     </button>
                     <button 
                       onClick={() => setTravelClass('Business')}
                       className={`flex-1 py-2 rounded-xl text-sm font-medium transition-colors ${travelClass === 'Business' ? 'bg-[#482AA9] text-white' : 'bg-neutral-light/20 text-neutral-gray hover:bg-neutral-light/40'}`}
                     >
-                      Business
+                      {t('Business')}
                     </button>
                   </div>
                 </div>
@@ -461,7 +455,7 @@ export const FlightSearchWidget = ({ compact = false }: { compact?: boolean }) =
             }}
             className={`w-full md:w-auto h-[52px] px-8 text-base font-bold shadow-lg transition-all rounded-2xl ${isSearchDisabled ? 'bg-neutral-light text-neutral-gray shadow-none cursor-not-allowed opacity-70' : 'shadow-brand-red/30 hover:shadow-brand-red/40'}`}
           >
-            Search Flights
+            {t('Search Flights')}
           </Button>
         </div>
       </div>
