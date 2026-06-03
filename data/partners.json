@@ -2,9 +2,14 @@
   "primaryCompanyId": 17643,
   "partners": [
     {
-      "id": 264645,
-      "name": "AustralJet",
-      "imageUrl": "/uploads/1780445482889-Frame_50__1_.png"
+      "id": 0,
+      "name": "Test",
+      "imageUrl": "/uploads/1780448973379-Frame_50__1_.png"
+    },
+    {
+      "id": 17490,
+      "name": "Bear Republic Airways",
+      "imageUrl": "/uploads/1780449248532-logo.png"
     }
   ]
 }

@@ -1,9 +1,10 @@
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/Button';
 import { PlaneTakeoff, PlaneLanding, Calendar, Users, ArrowRightLeft, Plus, Minus, ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react';
+import { useTranslation } from '@/lib/i18n';
 
 const AIRPORTS = [
   { code: 'SVO', city: 'Moscow', country: 'Russia' },
@@ -21,19 +22,21 @@ const DAYS = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
 
 export const FlightSearchWidget = ({ compact = false }: { compact?: boolean }) => {
   const router = useRouter();
-  const [tripType, setTripType] = useState('one');
-  const [from, setFrom] = useState('');
-  const [to, setTo] = useState('');
+  const searchParams = useSearchParams();
+  const { t } = useTranslation();
+  const [tripType, setTripType] = useState(searchParams?.get('tripType') || 'one');
+  const [from, setFrom] = useState(searchParams?.get('from') || '');
+  const [to, setTo] = useState(searchParams?.get('to') || '');
   
   const [isFromOpen, setIsFromOpen] = useState(false);
   const [isToOpen, setIsToOpen] = useState(false);
   
   const [isTravelersOpen, setIsTravelersOpen] = useState(false);
-  const [persons, setPersons] = useState(1);
-  const [travelClass, setTravelClass] = useState('Economy');
+  const [persons, setPersons] = useState(parseInt(searchParams?.get('persons') || '1') || 1);
+  const [travelClass, setTravelClass] = useState(searchParams?.get('class') || 'Economy');
 
-  const [departureDate, setDepartureDate] = useState<Date | null>(null);
-  const [returnDate, setReturnDate] = useState<Date | null>(null);
+  const [departureDate, setDepartureDate] = useState<Date | null>(searchParams?.get('dep') ? new Date(searchParams?.get('dep') as string) : null);
+  const [returnDate, setReturnDate] = useState<Date | null>(searchParams?.get('ret') ? new Date(searchParams?.get('ret') as string) : null);
   const [isDatesOpen, setIsDatesOpen] = useState(false);
   
   const [currentMonth, setCurrentMonth] = useState(new Date(new Date().getFullYear(), new Date().getMonth(), 1));
@@ -82,18 +85,27 @@ export const FlightSearchWidget = ({ compact = false }: { compact?: boolean }) =
           try {
             const res = await fetch(`/api/airline-club/airlines/${id}/links`);
             const links = await res.json();
-            links.forEach((link: any) => {
-              if (!airportsMap.has(link.fromAirportCode)) {
-                airportsMap.set(link.fromAirportCode, { code: link.fromAirportCode, city: link.fromAirportCity, country: link.fromCountryCode });
-              }
-              if (!airportsMap.has(link.toAirportCode)) {
-                airportsMap.set(link.toAirportCode, { code: link.toAirportCode, city: link.toAirportCity, country: link.toCountryCode });
-              }
-            });
+            if (Array.isArray(links)) {
+              links.forEach((link: any) => {
+                if (!airportsMap.has(link.fromAirportCode)) {
+                  airportsMap.set(link.fromAirportCode, { code: link.fromAirportCode, city: link.fromAirportCity, country: link.fromCountryCode });
+                }
+                if (!airportsMap.has(link.toAirportCode)) {
+                  airportsMap.set(link.toAirportCode, { code: link.toAirportCode, city: link.toAirportCity, country: link.toCountryCode });
+                }
+              });
+            }
           } catch (e) {
             console.error(e);
           }
         }));
+
+        // Fallback: also include AIRPORTS
+        AIRPORTS.forEach(a => {
+          if (!airportsMap.has(a.code)) {
+            airportsMap.set(a.code, a);
+          }
+        });
 
         if (airportsMap.size > 0) {
           setAvailableAirports(Array.from(airportsMap.values()));

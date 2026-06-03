@@ -47,41 +47,47 @@ function FlightCard({ group, convertPrice, persons, partners, primaryCompanyId }
   return (
     <div className="bg-white rounded-2xl shadow-sm border border-neutral-light/30 flex flex-col hover:shadow-md transition-shadow overflow-hidden">
       <div className="p-6 flex flex-col md:flex-row gap-6 cursor-pointer" onClick={() => setExpanded(!expanded)}>
-        <div className="flex-1 space-y-6">
-          {group.route.map((link: any, linkIdx: number) => (
-            <div key={linkIdx} className="flex items-center gap-4">
-              <div className="w-16 h-12 bg-neutral-light/10 flex items-center justify-center rounded overflow-hidden p-1">
-                {partners.find((p: any) => p.id === link.airlineId)?.imageUrl ? (
-                  <img src={partners.find((p: any) => p.id === link.airlineId)?.imageUrl} alt={link.airlineName} className="object-contain w-full h-full" />
-                ) : (
-                  <span className="text-[10px] font-bold text-center leading-tight">{link.airlineName}</span>
-                )}
+        <div className="flex-1 flex flex-col justify-center">
+          <div className="flex items-center gap-4">
+            <div className="w-16 h-12 bg-neutral-light/10 flex items-center justify-center rounded overflow-hidden p-1 flex-shrink-0">
+              {partners.find((p: any) => p.id === group.route[0].airlineId)?.imageUrl ? (
+                <img src={partners.find((p: any) => p.id === group.route[0].airlineId)?.imageUrl} alt={group.route[0].airlineName} className="object-contain w-full h-full" />
+              ) : (
+                <span className="text-[10px] font-bold text-center leading-tight">{group.route[0].airlineName}</span>
+              )}
+            </div>
+            
+            <div className="flex-1 grid grid-cols-[auto_1fr_auto] gap-4 items-center">
+              <div>
+                <div className="text-xl font-bold font-ui">{formatTime(group.route[0].departure)}</div>
+                <div className="text-sm text-neutral-gray">{group.route[0].fromAirportIata}</div>
               </div>
               
-              <div className="flex-1 grid grid-cols-[1fr_auto_1fr] gap-4 items-center">
-                <div>
-                  <div className="text-xl font-bold font-ui">{formatTime(link.departure)}</div>
-                  <div className="text-sm text-neutral-gray">{link.fromAirportIata}</div>
+              <div className="flex flex-col items-center justify-center relative w-full px-4 min-w-[100px]">
+                <div className="text-xs text-neutral-gray mb-1 text-center">
+                  {group.route.length === 1 ? 'Direct' : `${group.route.length - 1} stop${group.route.length > 2 ? 's' : ''}`}
                 </div>
-                
-                <div className="flex flex-col items-center justify-center relative w-24">
-                  <div className="text-xs text-neutral-gray mb-1">{Math.floor(link.duration / 60)}h {link.duration % 60}m</div>
-                  <div className="w-full h-px bg-neutral-light relative">
-                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-1.5 h-1.5 rounded-full bg-brand-red"></div>
-                  </div>
-                  <div className="text-[10px] text-neutral-gray mt-1 text-center truncate w-full">{link.airlineName} • {link.flightCode}</div>
+                <div className="w-full h-px bg-neutral-light relative flex justify-between items-center z-0">
+                  <div className="w-1.5 h-1.5 rounded-full bg-brand-red"></div>
+                  {group.route.slice(0, -1).map((_: any, idx: number) => (
+                    <div key={idx} className="w-1.5 h-1.5 rounded-full bg-neutral-gray"></div>
+                  ))}
+                  <div className="w-1.5 h-1.5 rounded-full bg-brand-red"></div>
                 </div>
-
-                <div className="text-right">
-                  <div className="text-xl font-bold font-ui">{formatTime(link.arrival)}</div>
-                  <div className="text-sm text-neutral-gray">{link.toAirportIata}</div>
+                <div className="text-[10px] text-neutral-gray mt-1 text-center truncate w-full">
+                  {group.route.map((l: any) => l.airlineName).filter((v: any, i: any, a: any) => a.indexOf(v) === i).join(', ')}
                 </div>
               </div>
+
+              <div className="text-right">
+                <div className="text-xl font-bold font-ui">{formatTime(group.route[group.route.length - 1].arrival)}</div>
+                <div className="text-sm text-neutral-gray">{group.route[group.route.length - 1].toAirportIata}</div>
+              </div>
             </div>
-          ))}
+          </div>
         </div>
         
-        <div className="md:border-l border-neutral-light/30 md:pl-6 flex flex-col justify-center items-center md:items-end min-w-[120px]">
+        <div className="md:border-l border-neutral-light/30 md:pl-6 flex flex-col justify-center items-center md:items-end min-w-[120px] flex-shrink-0">
           {group.isPartner && (
             <span className="text-xs font-bold text-neutral-gray uppercase tracking-wider mb-2 bg-neutral-light/20 px-2 py-1 rounded">
               Partner Flight
@@ -96,24 +102,43 @@ function FlightCard({ group, convertPrice, persons, partners, primaryCompanyId }
       {expanded && (
         <div className="border-t border-neutral-light/30 bg-neutral-light/5 p-6">
           <h4 className="font-bold font-ui mb-4 text-sm uppercase tracking-wider">Select Fare</h4>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            {['economy', 'business', 'first'].map(cls => {
-              const price = group.prices[cls];
-              if (!price) return null;
-              
-              const isPunto = !group.isPartner;
-              return (
-                <div key={cls} className={`p-4 rounded-xl border ${isPunto ? 'border-brand-red/30 bg-white' : 'border-neutral-light/50 bg-white'} hover:border-brand-red cursor-pointer transition-all flex flex-col`}>
-                  <div className="font-bold uppercase text-sm mb-1">{cls}</div>
-                  <div className={`text-xl font-bold ${isPunto ? 'text-brand-red' : 'text-neutral-black'} mb-2`}>{convertPrice(price)}</div>
-                  <div className="mt-auto">
-                    <button className="w-full py-2 text-sm font-bold rounded-lg bg-neutral-light/20 text-neutral-gray hover:bg-brand-red hover:text-white transition-colors">
-                      Select
-                    </button>
+          <div className={`grid grid-cols-1 gap-4 ${!group.isPartner ? 'sm:grid-cols-2 lg:grid-cols-4' : 'sm:grid-cols-3'}`}>
+            {group.isPartner ? (
+              ['economy', 'business', 'first'].map(cls => {
+                const price = group.prices[cls];
+                if (!price) return null;
+                
+                return (
+                  <div key={cls} className="p-4 rounded-xl border border-neutral-light/50 bg-white hover:border-brand-red cursor-pointer transition-all flex flex-col">
+                    <div className="font-bold uppercase text-sm mb-1">{cls}</div>
+                    <div className="text-xl font-bold text-neutral-black">{convertPrice(price)}</div>
                   </div>
-                </div>
-              );
-            })}
+                );
+              })
+            ) : (
+              <>
+                {[
+                  { name: 'Economy Basic', baseCls: 'economy', add: 0, perks: '1x Cabin bag (8kg)' },
+                  { name: 'Economy Plus', baseCls: 'economy', add: 50, perks: '1x Cabin bag + 1x Checked (23kg) + Free seat selection' },
+                  { name: 'Economy Premium', baseCls: 'economy', add: 100, perks: '1x Cabin bag + 2x Checked (23kg) + Priority Boarding' },
+                  { name: 'Business', baseCls: 'business', add: 0, perks: '2x Cabin + 2x Checked (32kg) + Lounge + Lie-flat seat' }
+                ].map((fare) => {
+                  const basePrice = group.prices[fare.baseCls] || (group.prices['economy'] * (fare.baseCls === 'business' ? 3 : 1));
+                  if (!basePrice && fare.baseCls !== 'business') return null;
+                  const finalPrice = basePrice + fare.add;
+                  
+                  return (
+                    <div key={fare.name} className="p-4 rounded-xl border border-brand-red/30 bg-white hover:border-brand-red cursor-pointer transition-all flex flex-col h-full">
+                      <div className="font-bold uppercase text-sm mb-1 text-brand-red">{fare.name}</div>
+                      <div className="text-xl font-bold text-brand-red mb-3">{convertPrice(finalPrice)}</div>
+                      <div className="mt-auto pt-3 border-t border-neutral-light/30">
+                        <div className="text-xs text-neutral-gray leading-relaxed">{fare.perks}</div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </>
+            )}
           </div>
         </div>
       )}
@@ -125,12 +150,35 @@ function SearchContent() {
   const searchParams = useSearchParams();
   const fromParam = searchParams.get('from');
   const toParam = searchParams.get('to');
+  const depParam = searchParams.get('dep');
+  const retParam = searchParams.get('ret');
+  const classParam = searchParams.get('class');
   const persons = parseInt(searchParams.get('persons') || '1');
+  const tripType = searchParams.get('tripType') || 'one';
   
   const [routes, setRoutes] = useState<Route[]>([]);
+  const [returnRoutes, setReturnRoutes] = useState<Route[]>([]);
   const [loading, setLoading] = useState(false);
   const [currency, setCurrency] = useState<'USD'|'RUB'|'EUR'>('USD');
   const [partners, setPartners] = useState<Partner[]>([]);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const stored = localStorage.getItem('punto_currency');
+      if (stored) setCurrency(stored as any);
+      
+      const handleStorage = () => {
+        const updated = localStorage.getItem('punto_currency');
+        if (updated) setCurrency(updated as any);
+      };
+      window.addEventListener('storage', handleStorage);
+      window.addEventListener('currency-change', handleStorage);
+      return () => {
+        window.removeEventListener('storage', handleStorage);
+        window.removeEventListener('currency-change', handleStorage);
+      };
+    }
+  }, []);
   const [airlineFilter, setAirlineFilter] = useState<'primary'|'all'>('primary');
   
   const [primaryCompanyId, setPrimaryCompanyId] = useState<number>(17643);
@@ -149,6 +197,50 @@ function SearchContent() {
   useEffect(() => {
     if (!fromParam || !toParam) return;
     
+    const fetchRoutesWithFallback = async (fId: number, tId: number) => {
+      let data = await (await fetch(`/api/airline-club/search-route/${fId}/${tId}`)).json();
+      if (!data || data.length === 0) {
+        // Manual connection calculation
+        const hubIatas = ['SVO', 'LED', 'ZRH', 'LHR', 'CDG', 'JFK', 'DXB', 'NRT'];
+        const hubIds = await Promise.all(hubIatas.map(async iata => {
+          try {
+            const r = await (await fetch(`/api/airline-club/search-airport?input=${iata}`)).json();
+            return r.entries?.[0]?.airportId;
+          } catch { return null; }
+        }));
+        
+        for (const hId of hubIds) {
+          if (!hId || hId === fId || hId === tId) continue;
+          try {
+            const leg1 = await (await fetch(`/api/airline-club/search-route/${fId}/${hId}`)).json();
+            if (leg1 && leg1.length > 0) {
+              const leg2 = await (await fetch(`/api/airline-club/search-route/${hId}/${tId}`)).json();
+              if (leg2 && leg2.length > 0) {
+                for (const l1 of leg1) {
+                  for (const l2 of leg2) {
+                    const arr1 = l1.route[l1.route.length - 1].arrival;
+                    let dep2 = l2.route[0].departure;
+                    // If departure is earlier in the week than arrival, assume next week
+                    if (dep2 < arr1) dep2 += 7 * 24 * 60; 
+                    
+                    const connectionTime = dep2 - arr1;
+                    if (connectionTime > 60 && connectionTime < 24 * 60) { // between 1 and 24 hours
+                      if (!data) data = [];
+                      data.push({
+                        route: [...l1.route, ...l2.route]
+                      });
+                    }
+                  }
+                }
+              }
+            }
+          } catch {}
+          if (data && data.length > 0) break; // Break early if we found some routes
+        }
+      }
+      return data || [];
+    };
+
     const fetchRoutes = async () => {
       setLoading(true);
       const start = Date.now();
@@ -166,15 +258,23 @@ function SearchContent() {
           const fromId = fromData.entries[0].airportId;
           const toId = toData.entries[0].airportId;
           
-          const routeRes = await fetch(`/api/airline-club/search-route/${fromId}/${toId}`);
-          const routeData = await routeRes.json();
+          const routeData = await fetchRoutesWithFallback(fromId, toId);
           setRoutes(routeData);
+          
+          if (tripType === 'round') {
+            const retData = await fetchRoutesWithFallback(toId, fromId);
+            setReturnRoutes(retData);
+          } else {
+            setReturnRoutes([]);
+          }
         } else {
           setRoutes([]);
+          setReturnRoutes([]);
         }
       } catch (err) {
         console.error(err);
         setRoutes([]);
+        setReturnRoutes([]);
       } finally {
         const elapsed = Date.now() - start;
         if (elapsed < 3500) {
@@ -185,7 +285,7 @@ function SearchContent() {
     };
     
     fetchRoutes();
-  }, [fromParam, toParam]);
+  }, [fromParam, toParam, depParam, retParam, classParam, persons, tripType]);
 
   const convertPrice = (priceInUsd: number) => {
     let result = priceInUsd;
@@ -195,35 +295,41 @@ function SearchContent() {
     return `${symbol}${Math.round(result * persons).toLocaleString()}`;
   };
 
-  const filteredRoutes = routes.filter(r => {
-    if (airlineFilter === 'primary') {
-      return r.route.every(link => link.airlineId === primaryCompanyId);
-    } else {
-      const allowedIds = new Set([primaryCompanyId, ...partners.map(p => p.id)]);
-      return r.route.every(link => allowedIds.has(link.airlineId));
-    }
-  });
+  const filterAndGroup = (routesList: Route[]) => {
+    const filtered = routesList.filter(r => {
+      if (airlineFilter === 'primary') {
+        return r.route.every(link => link.airlineId === primaryCompanyId);
+      } else {
+        const allowedIds = new Set([primaryCompanyId, ...partners.map(p => p.id)]);
+        return r.route.every(link => allowedIds.has(link.airlineId));
+      }
+    });
 
-  const groupedRoutes: Record<string, { route: RouteLink[], prices: Record<string, number>, isPartner: boolean, airlineName: string, airlineId: number }> = {};
-  filteredRoutes.forEach(r => {
-    const key = r.route.map(link => link.flightCode).join('-');
-    if (!groupedRoutes[key]) {
-      const isPartner = r.route.some(l => l.airlineId !== primaryCompanyId);
-      groupedRoutes[key] = {
-        route: r.route,
-        prices: {},
-        isPartner,
-        airlineName: r.route[0].airlineName,
-        airlineId: r.route[0].airlineId
-      };
-    }
-    const rClass = r.route[0].linkClass;
-    const rPrice = r.route.reduce((sum, link) => sum + link.price, 0);
-    groupedRoutes[key].prices[rClass] = rPrice;
-  });
+    const grouped: Record<string, { route: RouteLink[], prices: Record<string, number>, isPartner: boolean, airlineName: string, airlineId: number }> = {};
+    filtered.forEach(r => {
+      const key = r.route.map(link => link.flightCode).join('-');
+      if (!grouped[key]) {
+        const isPartner = r.route.some(l => l.airlineId !== primaryCompanyId);
+        grouped[key] = {
+          route: r.route,
+          prices: {},
+          isPartner,
+          airlineName: r.route[0].airlineName,
+          airlineId: r.route[0].airlineId
+        };
+      }
+      const rClass = r.route[0].linkClass;
+      const rPrice = r.route.reduce((sum, link) => sum + link.price, 0);
+      grouped[key].prices[rClass] = rPrice;
+    });
+    return { filtered, grouped: Object.values(grouped) };
+  };
 
-  const hasAnyRoutes = routes.length > 0;
-  const hasPartnerRoutes = routes.some(r => r.route.some(l => l.airlineId !== primaryCompanyId));
+  const { filtered: filteredRoutes, grouped: groupedDeparture } = filterAndGroup(routes);
+  const { filtered: filteredReturn, grouped: groupedReturn } = filterAndGroup(returnRoutes);
+
+  const hasAnyRoutes = routes.length > 0 || returnRoutes.length > 0;
+  const hasPartnerRoutes = [...routes, ...returnRoutes].some(r => r.route.some(l => l.airlineId !== primaryCompanyId));
 
   return (
     <div className="bg-neutral-light/5 min-h-screen">
@@ -238,21 +344,6 @@ function SearchContent() {
           <div className="bg-white rounded-2xl p-5 shadow-sm border border-neutral-light/30">
             <h3 className="font-bold font-ui mb-4">Filters</h3>
             
-            <div className="mb-6">
-              <h4 className="text-sm font-semibold text-neutral-gray mb-3 uppercase tracking-wider">Currency</h4>
-              <div className="flex gap-2">
-                {['USD', 'RUB', 'EUR'].map(cur => (
-                  <button 
-                    key={cur}
-                    onClick={() => setCurrency(cur as 'USD'|'RUB'|'EUR')}
-                    className={`flex-1 py-1 text-sm font-bold rounded-lg transition-colors ${currency === cur ? 'bg-brand-red text-white' : 'bg-neutral-light/20 text-neutral-gray hover:bg-neutral-light/40'}`}
-                  >
-                    {cur}
-                  </button>
-                ))}
-              </div>
-            </div>
-
             <div className="mb-6">
               <h4 className="text-sm font-semibold text-neutral-gray mb-3 uppercase tracking-wider">Airlines</h4>
               <div className="space-y-2">
@@ -280,15 +371,21 @@ function SearchContent() {
             </div>
             
             <div className="mb-6">
-              <h4 className="text-sm font-semibold text-neutral-gray mb-3 uppercase tracking-wider">Departure Time</h4>
-              <p className="text-xs text-neutral-gray mb-1">Filter (UI only)</p>
-              <input type="range" className="w-full accent-brand-red" />
-            </div>
-
-            <div className="mb-6">
-              <h4 className="text-sm font-semibold text-neutral-gray mb-3 uppercase tracking-wider">Arrival Time</h4>
-              <p className="text-xs text-neutral-gray mb-1">Filter (UI only)</p>
-              <input type="range" className="w-full accent-brand-red" />
+              <h4 className="text-sm font-semibold text-neutral-gray mb-3 uppercase tracking-wider">Stops</h4>
+              <div className="space-y-2">
+                <label className="flex items-center gap-2 text-sm cursor-pointer">
+                  <input type="radio" name="stops" className="accent-brand-red" defaultChecked />
+                  <span>Any number of stops</span>
+                </label>
+                <label className="flex items-center gap-2 text-sm cursor-pointer">
+                  <input type="radio" name="stops" className="accent-brand-red" />
+                  <span>Non-stop only</span>
+                </label>
+                <label className="flex items-center gap-2 text-sm cursor-pointer">
+                  <input type="radio" name="stops" className="accent-brand-red" />
+                  <span>Up to 1 stop</span>
+                </label>
+              </div>
             </div>
           </div>
         </aside>
@@ -319,7 +416,7 @@ function SearchContent() {
               <p className="text-neutral-gray">We couldn't find any flights matching your current criteria.</p>
             </div>
           )}
-          {!loading && hasAnyRoutes && filteredRoutes.length === 0 && (
+          {!loading && hasAnyRoutes && filteredRoutes.length === 0 && filteredReturn.length === 0 && (
             <div className="bg-white rounded-2xl p-8 text-center shadow-sm border border-neutral-light/30">
               <h3 className="text-xl font-bold font-heading mb-2">No flights found with current filters</h3>
               <p className="text-neutral-gray mb-4">Try relaxing your filters to see available flights.</p>
@@ -334,9 +431,9 @@ function SearchContent() {
             </div>
           )}
           
-          {!loading && Object.entries(groupedRoutes).map(([key, group], idx) => (
+          {!loading && tripType === 'one' && groupedDeparture.map((group, idx) => (
             <FlightCard 
-              key={idx} 
+              key={`dep-${idx}`} 
               group={group} 
               convertPrice={convertPrice} 
               persons={persons} 
@@ -344,6 +441,46 @@ function SearchContent() {
               primaryCompanyId={primaryCompanyId} 
             />
           ))}
+
+          {!loading && tripType === 'round' && (
+            <div className="space-y-8">
+              <div>
+                <h3 className="text-xl font-bold font-heading mb-4 text-neutral-black">Departure Flights</h3>
+                <div className="space-y-4">
+                  {groupedDeparture.length > 0 ? groupedDeparture.map((group, idx) => (
+                    <FlightCard 
+                      key={`dep-${idx}`} 
+                      group={group} 
+                      convertPrice={convertPrice} 
+                      persons={persons} 
+                      partners={partners} 
+                      primaryCompanyId={primaryCompanyId} 
+                    />
+                  )) : (
+                    <div className="bg-white rounded-2xl p-6 text-center text-neutral-gray border border-neutral-light/30">No departure flights found</div>
+                  )}
+                </div>
+              </div>
+
+              <div>
+                <h3 className="text-xl font-bold font-heading mb-4 text-neutral-black">Return Flights</h3>
+                <div className="space-y-4">
+                  {groupedReturn.length > 0 ? groupedReturn.map((group, idx) => (
+                    <FlightCard 
+                      key={`ret-${idx}`} 
+                      group={group} 
+                      convertPrice={convertPrice} 
+                      persons={persons} 
+                      partners={partners} 
+                      primaryCompanyId={primaryCompanyId} 
+                    />
+                  )) : (
+                    <div className="bg-white rounded-2xl p-6 text-center text-neutral-gray border border-neutral-light/30">No return flights found</div>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>
